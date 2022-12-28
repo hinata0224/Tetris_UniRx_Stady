@@ -6,7 +6,6 @@ namespace BlockInput
 {
     public class InputController : MonoBehaviour
     {
-        [SerializeField]
         private BlockController controller;
 
         public void GetPlayerInput(InputAction.CallbackContext contex)

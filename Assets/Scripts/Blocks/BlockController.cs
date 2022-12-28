@@ -2,24 +2,24 @@ using UnityEngine;
 using UniRx;
 using Other_Script;
 using FiledData;
+using System;
 
 namespace Tetris_Block
 {
     public class BlockController : MonoBehaviour
     {
-        [SerializeField]
-        private float downInterval = 1f;
+        private float downInterval;
 
-        [SerializeField]
-        private float holedInterval = 0.5f;
+        private float holedInterval;
 
         private bool endBlock = false;
 
-        [SerializeField]
         private Transform grid;
 
         private ReactiveProperty<float> x_value = new(0);
         private ReactiveProperty<float> y_value = new(0);
+
+        private Subject<Unit> nextCreate = new();
 
         private CompositeDisposable disposables = new();
 
@@ -28,8 +28,13 @@ namespace Tetris_Block
 
         private FieldData model = new();
 
-        void Start()
+        //初期化
+        public void Init(float down, float holed, Transform _grid)
         {
+            downInterval= down;
+            holedInterval= holed;
+            grid = _grid;
+
             x_value.Where(x => x != 0)
                 .Subscribe(x => BlockMove(x))
                 .AddTo(disposables);
@@ -53,6 +58,7 @@ namespace Tetris_Block
                 });
 
             timer.SetTimer(downInterval);
+
         }
 
         //左右の移動
@@ -96,6 +102,10 @@ namespace Tetris_Block
                 if (!endBlock)
                 {
                     transform.position += new Vector3(0, -1, 0);
+                    if (!ValicMovement())
+                    {
+                        transform.position += new Vector3(0, 1, 0);
+                    }
                     holedTimer = new TimerModel();
                     //長押ししていたら落ち続ける
                     holedTimer.GetEndTimer()
@@ -113,11 +123,11 @@ namespace Tetris_Block
 
         private void DownBlock()
         {
+            endBlock= true;
             transform.position += new Vector3(0, -1, 0);
             if (!ValicMovement())
             {
                 transform.position += new Vector3(0, 1, 0);
-                endBlock = true;
             }
             else
             {
@@ -155,17 +165,25 @@ namespace Tetris_Block
             y_value.Value = vec.y;
         }
 
+        //子オブジェクトをGridに保存してこの親オブジェクトを削除
         private void SetPosition()
         {
             timer.EndTimer();
-
-            foreach(Transform chiledren in transform)
+            nextCreate.OnNext(Unit.Default);
+            int count = transform.childCount;
+            for (int i = count -1; i >= 0; i--)
             {
-                model.SetGrid(chiledren.transform);
-                chiledren.parent = grid;
+                model.SetGrid(transform.GetChild(i));
+                transform.GetChild(i).parent = grid;
             }
-
+            
             Destroy(gameObject);
+
+        }
+
+        public IObservable<Unit> GetNextCreate()
+        {
+            return nextCreate.AddTo(disposables);
         }
 
         private void OnDestroy()

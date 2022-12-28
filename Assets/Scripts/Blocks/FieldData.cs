@@ -9,7 +9,7 @@ namespace FiledData
         private static int widht = 10;
         private static int height = 15;
 
-        private Transform[,] grid = new Transform[widht, height];
+        private static Transform[,] grid = new Transform[widht, height];
 
         //フィールドにブロックを置いたときにブロックの情報を保存
         public void SetGrid(Transform block)
