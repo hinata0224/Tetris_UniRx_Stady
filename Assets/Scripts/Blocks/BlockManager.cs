@@ -4,6 +4,8 @@ using UnityEngine;
 using BlockInput;
 using System;
 using UniRx;
+using System.Threading;
+using Other_Script;
 
 namespace Tetris_Block
 {
@@ -11,6 +13,9 @@ namespace Tetris_Block
     {
         [SerializeField, Header("落とす時間の感覚")]
         private float downInterval = 1f;
+
+        [SerializeField,Header("次のミノの生成インターバル")]
+        private float nextInterval = 1f;
 
         [SerializeField, Header("長押し時に落ちる早さ")]
         private float holedInterval = 0.5f;
@@ -27,6 +32,10 @@ namespace Tetris_Block
         //表示するブロックの受け皿
         private List<GameObject> nextBlock = new(4);
 
+        private bool instanceCheck = true;
+
+        private Subject<Unit> gameOverFlag = new();
+
         [SerializeField,Header("参照スクリプト")]
         private InputController controller;
 
@@ -40,10 +49,13 @@ namespace Tetris_Block
         //Blockの生成だけの関数
         private void BlockInstance()
         {
-            GameObject block = blocks[UnityEngine.Random.Range(0, blocks.Count)];
-            GameObject obj = Instantiate(block);
+            if (instanceCheck)
+            {
+                GameObject block = blocks[UnityEngine.Random.Range(0, blocks.Count)];
+                GameObject obj = Instantiate(block);
 
-            nextBlock.Add(obj);
+                nextBlock.Add(obj);
+            }
         }
 
         //Blockの並び替え
@@ -54,11 +66,32 @@ namespace Tetris_Block
                 if (i == 0)
                 {
                     blockdata = nextBlock[i].GetComponent<BlockController>();
-                    blockdata.Init(downInterval, holedInterval, grid);
                     controller.SetController(blockdata);
 
+                    blockdata.GetGameOverFlag()
+                        .Subscribe(_ =>
+                        {
+                            Debug.Log("zikkou");
+                            instanceCheck = false;
+                            gameOverFlag.OnNext(Unit.Default);
+                        });
                     blockdata.GetNextCreate()
-                        .Subscribe(_ => DeleteBlock());
+                        .Subscribe(_ =>
+                        {
+                            DeleteBlock();
+                            TimerModel timer = new();
+                            timer.GetEndTimer()
+                            .Where(_ => instanceCheck)
+                            .Subscribe(_ =>
+                            {
+                                BlockInstance();
+                                SetBlockPosition();
+                                timer.EndTimer();
+                            });
+                            timer.SetTimer(nextInterval);
+                        });
+                    blockdata.Init(downInterval, holedInterval, grid);
+
                 }
                 nextBlock[i].transform.position = createPos[i].position;
             }
@@ -66,9 +99,8 @@ namespace Tetris_Block
 
         private void DeleteBlock()
         {
+            Destroy(blockdata.gameObject);
             nextBlock.RemoveAt(0);
-            BlockInstance();
-            SetBlockPosition();
         }
 
         private void Init()
@@ -79,6 +111,11 @@ namespace Tetris_Block
             }
 
             SetBlockPosition();
+        }
+
+        public IObservable<Unit> GetGameOverFlag()
+        {
+            return gameOverFlag;
         }
     }
 }

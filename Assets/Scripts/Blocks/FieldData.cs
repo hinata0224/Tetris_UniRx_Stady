@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -28,9 +27,63 @@ namespace FiledData
             return true;
         }
 
+        //1ラインそろってるの確認
+        public bool CheckLine(int height)
+        {
+            for (int i = 0; i < widht; i++)
+            {
+                if (grid[i, height] == null)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        //そろったブロックを消す処理
+        public List<GameObject> DeLeteLine(List<int> count)
+        {
+            List<GameObject> returnlist = new(20);
+            for (int i = 0; i < count.Count; i++)
+            {
+                for (int j = 0; j < widht; j++)
+                {
+                    returnlist.Add(grid[j, count[i]].gameObject);
+                    grid[j, count[i]] = null;
+                }
+            }
+            return returnlist;
+        }
+
+        //ブロックを下に落とす処理
+        public void RowDown(List<int> count)
+        {
+            for (int i = 0; i < count.Count; i++)
+            {
+                for (int h = count[i]; h < height; h++)
+                {
+                    for (int j = 0; j < widht; j++)
+                    {
+                        if (grid[j, h] != null)
+                        {
+                            grid[j, h - 1] = grid[j, h];
+                            grid[j, h] = null;
+                            grid[j, h - 1].transform.position -= new Vector3(0, 1, 0);
+                        }
+                    }
+                }
+            }
+        }
+
         public int GetWidht()
         {
             return widht;
+        }
+
+        public int GetHeight()
+        {
+            return height;
         }
     }
 }

@@ -3,6 +3,7 @@ using UniRx;
 using Other_Script;
 using FiledData;
 using System;
+using System.Collections.Generic;
 
 namespace Tetris_Block
 {
@@ -20,6 +21,7 @@ namespace Tetris_Block
         private ReactiveProperty<float> y_value = new(0);
 
         private Subject<Unit> nextCreate = new();
+        private Subject<Unit> gameOverFlag = new();
 
         private CompositeDisposable disposables = new();
 
@@ -58,6 +60,12 @@ namespace Tetris_Block
                 });
 
             timer.SetTimer(downInterval);
+
+            if (!ValicMovement())
+            {
+                Debug.Log("aaaaa");
+                gameOverFlag.OnNext(Unit.Default);
+            }
 
         }
 
@@ -121,6 +129,7 @@ namespace Tetris_Block
             }
         }
 
+        //ブロックを下に落とす
         private void DownBlock()
         {
             endBlock= true;
@@ -139,18 +148,18 @@ namespace Tetris_Block
         //ブロックがフィールドにあるかどうかフィールド外かブロックがあればfalseを返す。
         private bool ValicMovement()
         {
-            foreach(Transform chiledren in transform)
+            foreach (Transform children in transform)
             {
-                int x_value = Mathf.RoundToInt(chiledren.position.x);
-                int y_value = Mathf.RoundToInt(chiledren.position.y);
+                int roundX = Mathf.RoundToInt(children.transform.position.x);
+                int roundY = Mathf.RoundToInt(children.transform.position.y);
 
-                //画面内かの判定
-                if(x_value < 0 || x_value >= model.GetWidht() || y_value < 0)
+                if (roundX < 0 || roundX >= model.GetWidht() || roundY < 0)
                 {
+                    Debug.Log(roundX + gameObject.name + children.name);
                     return false;
                 }
 
-                if(!model.CheckGrid(x_value, y_value))
+                if (!model.CheckGrid(roundX, roundY))
                 {
                     return false;
                 }
@@ -169,21 +178,45 @@ namespace Tetris_Block
         private void SetPosition()
         {
             timer.EndTimer();
-            nextCreate.OnNext(Unit.Default);
             int count = transform.childCount;
             for (int i = count -1; i >= 0; i--)
             {
                 model.SetGrid(transform.GetChild(i));
                 transform.GetChild(i).parent = grid;
             }
-            
-            Destroy(gameObject);
+
+            //一列そろっているかの確認とそろっているラインの高さを保管
+            List<int> lineCount = new(5);
+            for (int i = model.GetHeight() - 1; i >= 0; i--)        //上から確認する
+            {
+                if (model.CheckLine(i))
+                {
+                    lineCount.Add(i);
+                }
+            }
+            //ブロックの削除と削除した列を一段下げる
+            if(lineCount.Count > 0)
+            {
+                List<GameObject> tempObj = model.DeLeteLine(lineCount);
+                foreach(GameObject obj in tempObj)
+                {
+                    Destroy(obj);
+                }
+                model.RowDown(lineCount);
+            }
+
+            nextCreate.OnNext(Unit.Default);
 
         }
 
         public IObservable<Unit> GetNextCreate()
         {
             return nextCreate.AddTo(disposables);
+        }
+
+        public IObservable<Unit> GetGameOverFlag()
+        {
+            return gameOverFlag.AddTo(disposables);
         }
 
         private void OnDestroy()
