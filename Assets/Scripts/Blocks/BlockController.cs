@@ -61,9 +61,9 @@ namespace Tetris_Block
 
             timer.SetTimer(downInterval);
 
+            //ブロックが落ち始めるときに他のブロックと重なっていたり、フィールド外ならゲームオーバー
             if (!ValicMovement())
             {
-                Debug.Log("aaaaa");
                 gameOverFlag.OnNext(Unit.Default);
             }
 
@@ -155,7 +155,6 @@ namespace Tetris_Block
 
                 if (roundX < 0 || roundX >= model.GetWidht() || roundY < 0)
                 {
-                    Debug.Log(roundX + gameObject.name + children.name);
                     return false;
                 }
 

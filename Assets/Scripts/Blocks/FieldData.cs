@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UniRx;
 
 namespace FiledData
 {
@@ -7,6 +8,12 @@ namespace FiledData
     {
         private static int widht = 10;
         private static int height = 15;
+
+        private int addScore = 100;
+
+        //スコアのデータを持つ
+        public ReactiveProperty<int> score => _score;
+        private static readonly IntReactiveProperty _score = new(0);
 
         private static Transform[,] grid = new Transform[widht, height];
 
@@ -52,6 +59,7 @@ namespace FiledData
                     returnlist.Add(grid[j, count[i]].gameObject);
                     grid[j, count[i]] = null;
                 }
+                _score.Value += addScore;
             }
             return returnlist;
         }

@@ -71,7 +71,6 @@ namespace Tetris_Block
                     blockdata.GetGameOverFlag()
                         .Subscribe(_ =>
                         {
-                            Debug.Log("zikkou");
                             instanceCheck = false;
                             gameOverFlag.OnNext(Unit.Default);
                         });
@@ -90,11 +89,10 @@ namespace Tetris_Block
                             });
                             timer.SetTimer(nextInterval);
                         });
-                    blockdata.Init(downInterval, holedInterval, grid);
-
                 }
                 nextBlock[i].transform.position = createPos[i].position;
             }
+            blockdata.Init(downInterval, holedInterval, grid);
         }
 
         private void DeleteBlock()
