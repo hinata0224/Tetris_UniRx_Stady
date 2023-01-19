@@ -17,6 +17,9 @@ namespace Tetris_Block
 
         private Transform grid;
 
+        [SerializeField]
+        private Vector3 rotatePos;
+
         private ReactiveProperty<float> x_value = new(0);
         private ReactiveProperty<float> y_value = new(0);
 
@@ -98,10 +101,10 @@ namespace Tetris_Block
             timer.RestertTimer();
             if (Mathf.Sign(y) == 1)
             {
-                transform.RotateAround(transform.position, new Vector3(0, 0, 90), 90);
+                transform.RotateAround(transform.TransformPoint(rotatePos), new Vector3(0, 0, 90), 90);
                 if (!ValicMovement())
                 {
-                    transform.RotateAround(transform.position, new Vector3(0, 0, 90), -90);
+                    transform.RotateAround(transform.TransformPoint(rotatePos), new Vector3(0, 0, 90), -90);
                 }
                 y_value.Value = 0;
             }
@@ -132,10 +135,10 @@ namespace Tetris_Block
         //ÉuÉçÉbÉNÇâ∫Ç…óéÇ∆Ç∑
         private void DownBlock()
         {
-            endBlock= true;
             transform.position += new Vector3(0, -1, 0);
             if (!ValicMovement())
             {
+                endBlock = true;
                 transform.position += new Vector3(0, 1, 0);
             }
             else

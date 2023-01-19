@@ -21,7 +21,7 @@ namespace FiledData
         public void SetGrid(Transform block)
         {
             Vector3 pos = block.position;
-            grid[(int)pos.x, (int)pos.y] = block;
+            grid[(int)Mathf.Round(pos.x), (int)Mathf.Round(pos.y)] = block;
         }
 
         //その場所にブロックがあるかの確認
